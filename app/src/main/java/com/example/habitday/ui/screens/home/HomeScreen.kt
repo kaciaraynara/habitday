@@ -32,6 +32,7 @@ import com.example.habitday.viewmodel.HomeViewModel
 import com.example.habitday.viewmodel.SettingsViewModel
 import com.example.habitday.viewmodel.SettingsViewModelFactory
 import java.time.LocalTime
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,11 +54,11 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         application.sensorHelper.startListening {
             val tips = listOf(
-                "Tente beber um copo de água agora!",
-                "Que tal 5 minutos de alongamento?",
-                "Respire fundo por 30 segundos.",
-                "Sua constância é sua maior força!",
-                "Um pequeno passo hoje é um grande salto amanhã."
+                "Vamos regar seus hábitos hoje?",
+                "Pequenos brotos levam tempo para crescer.",
+                "Sua constância é como o sol para seu progresso.",
+                "Um passo de cada vez, sem pressa.",
+                "O Habitinho está orgulhoso da sua jornada!"
             )
             shakeTipText = tips.random()
             showShakeTip = true
@@ -71,11 +72,11 @@ fun HomeScreen(
     if (showShakeTip) {
         AlertDialog(
             onDismissRequest = { showShakeTip = false },
-            title = { Text("Dica do Habitinho", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
+            title = { Text("Dica do Habitinho", color = BrandBlue, fontWeight = FontWeight.Bold) },
             text = { Text(shakeTipText) },
             confirmButton = {
                 TextButton(onClick = { showShakeTip = false }) {
-                    Text("Entendido", color = MaterialTheme.colorScheme.primary)
+                    Text("Entendido", color = BrandBlue)
                 }
             }
         )
@@ -93,8 +94,15 @@ fun HomeScreen(
         else -> MascotMood.IDLE
     }
 
+    // BACKGROUND PERSONALIZÁVEL (Pedido: Fundo branco e escolha de cores)
+    val bgColor = try { 
+        Color(android.graphics.Color.parseColor(prefs?.backgroundColor ?: "#FFFFFF")) 
+    } catch (e: Exception) { 
+        BackgroundWhite 
+    }
+
     Scaffold(
-        containerColor = Color.Transparent, 
+        containerColor = bgColor,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { HabitDayLogo(mascotStyle = mascotStyle) },
@@ -103,7 +111,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Settings, 
                             contentDescription = "Configurações", 
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = TextPrimary
                         )
                     }
                 },
@@ -115,11 +123,11 @@ fun HomeScreen(
         floatingActionButton = {
             LargeFloatingActionButton(
                 onClick = onAddHabit,
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = BrandBlue,
                 contentColor = Color.White,
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Adicionar hábito", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Add, contentDescription = "Adicionar", modifier = Modifier.size(32.dp))
             }
         }
     ) { padding ->
@@ -139,19 +147,7 @@ fun HomeScreen(
             }
 
             item {
-                HabitProgressBar(
-                    completed = uiState.completedCount,
-                    total = uiState.totalCount,
-                    percentage = uiState.completionPercentage
-                )
-                if (uiState.totalCount > 0) {
-                    Text(
-                        text = "Hoje",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(start = 24.dp, top = 32.dp, bottom = 12.dp)
-                    )
-                }
+                HomeHeroSection(uiState.completionPercentage, mascotMood, mascotStyle)
             }
 
             item {
@@ -166,13 +162,13 @@ fun HomeScreen(
                 itemsIndexed(uiState.habits) { index, item ->
                     var isVisible by remember { mutableStateOf(false) }
                     LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(index * 50L)
+                        delay(index * 50L)
                         isVisible = true
                     }
                     
                     AnimatedVisibility(
                         visible = isVisible,
-                        enter = fadeIn() + slideInVertically(initialOffsetY = { 20 })
+                        enter = fadeIn() + slideInVertically(initialOffsetY = { 30 })
                     ) {
                         if (item.habit.isHydration) {
                             HydrationCard(
@@ -201,10 +197,10 @@ fun HomeScreen(
 @Composable
 fun MascotDialogue(percentage: Int, mood: MascotMood) {
     val message = when {
-        percentage == 100 -> "Incrível! Você completou todos os seus hábitos hoje!"
-        percentage > 50 -> "Você está indo muito bem, continue assim!"
-        percentage > 0 -> "Ótimo começo! Vamos completar mais um?"
-        else -> "Seu dia está apenas começando. Vamos planejar algo bom?"
+        percentage == 100 -> "Incrível! Tudo floresceu hoje!"
+        percentage > 50 -> "Continue cuidando da sua rotina!"
+        percentage > 0 -> "Ótimo começo! Vamos crescer mais?"
+        else -> "Seu dia é como terra fértil. O que vamos plantar?"
     }
 
     Surface(
@@ -212,7 +208,7 @@ fun MascotDialogue(percentage: Int, mood: MascotMood) {
             .padding(horizontal = 24.dp, vertical = 8.dp)
             .fillMaxWidth()
             .shadow(2.dp, MaterialTheme.shapes.medium),
-        color = SurfaceLight,
+        color = BackgroundWhite,
         shape = MaterialTheme.shapes.medium,
         border = androidx.compose.foundation.BorderStroke(1.dp, BrandBlue.copy(alpha = 0.1f))
     ) {
@@ -239,7 +235,7 @@ fun HomeHeroSection(percentage: Int, mood: MascotMood, style: MascotStyle) {
             .padding(horizontal = 24.dp, vertical = 16.dp)
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            containerColor = BrandBlue.copy(alpha = 0.05f)
         ),
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(0.dp)
@@ -252,22 +248,22 @@ fun HomeHeroSection(percentage: Int, mood: MascotMood, style: MascotStyle) {
             Spacer(modifier = Modifier.width(24.dp))
             Column {
                 Text(
-                    text = if (percentage == 100) "Dia incrível!" else "Sua evolução",
+                    text = if (percentage == 100) "Dia Concluído!" else "Sua Jornada",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = BrandBlue,
                     fontWeight = FontWeight.Black
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
                     progress = { percentage / 100f },
-                    modifier = Modifier.fillMaxWidth().height(10.dp).clip(CircleShape),
-                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth().height(12.dp).clip(CircleShape),
+                    color = BrandBlue,
                     trackColor = Color.White
                 )
                 Text(
-                    text = "$percentage% concluído hoje",
+                    text = "$percentage% da evolução",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = BrandBlue,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -296,7 +292,7 @@ fun HabitItemCard(
     val accentColor = try { 
         Color(android.graphics.Color.parseColor(color)) 
     } catch (e: Exception) { 
-        MaterialTheme.colorScheme.primary 
+        BrandBlue 
     }
 
     Card(
@@ -309,20 +305,38 @@ fun HabitItemCard(
             }
             .clickable { onToggle() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isCompleted) MaterialTheme.colorScheme.surface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surface
+            containerColor = if (isCompleted) SurfaceLight.copy(alpha = 0.5f) else BackgroundWhite
         ),
         shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        border = if (isCompleted) null else androidx.compose.foundation.BorderStroke(2.dp, accentColor.copy(alpha = 0.2f))
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(32.dp).border(2.dp, accentColor, CircleShape),
-                color = if (isCompleted) accentColor else Color.Transparent,
-                shape = CircleShape
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(if (isCompleted) accentColor else Color.Transparent)
+                    .border(2.dp, accentColor, CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                if (isCompleted) Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                if (isCompleted) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
+
             Spacer(modifier = Modifier.width(16.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = name,

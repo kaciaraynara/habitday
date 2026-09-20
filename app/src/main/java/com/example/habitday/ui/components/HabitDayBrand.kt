@@ -32,6 +32,10 @@ enum class MascotStyle {
     CLASSICO, CALMO, ENERGETICO, FOCADO, MINIMALISTA
 }
 
+/**
+ * Habitinho 2.0: O novo avatar original do HabitDay.
+ * Um broto de crescimento lúdico que representa a evolução dos hábitos.
+ */
 @Composable
 fun HabitinhoMascot(
     mood: MascotMood,
@@ -40,10 +44,10 @@ fun HabitinhoMascot(
     style: MascotStyle = MascotStyle.CLASSICO,
     colorOverride: Color? = null
 ) {
-    val dropColor = colorOverride ?: when (style) {
+    val mainColor = colorOverride ?: when (style) {
         MascotStyle.CALMO -> Color(0xFF64B5F6)
-        MascotStyle.ENERGETICO -> Color(0xFFF06292)
-        MascotStyle.FOCADO -> Color(0xFF4DB6AC)
+        MascotStyle.ENERGETICO -> Color(0xFFFF4081)
+        MascotStyle.FOCADO -> Color(0xFF00BFA5)
         MascotStyle.MINIMALISTA -> Color(0xFF90A4AE)
         else -> BrandBlue
     }
@@ -52,73 +56,70 @@ fun HabitinhoMascot(
         val w = size.toPx()
         val h = size.toPx()
 
-        // Gota principal (Corpo)
-        val path = Path().apply {
-            moveTo(w * 0.5f, h * 0.1f)
-            cubicTo(w * 0.4f, h * 0.2f, w * 0.1f, h * 0.5f, w * 0.1f, h * 0.7f)
-            cubicTo(w * 0.1f, h * 0.95f, w * 0.9f, h * 0.95f, w * 0.9f, h * 0.7f)
-            cubicTo(w * 0.9f, h * 0.5f, w * 0.6f, h * 0.2f, w * 0.5f, h * 0.1f)
+        // Corpo do Broto (Base arredondada)
+        val bodyPath = Path().apply {
+            moveTo(w * 0.2f, h * 0.8f)
+            quadraticTo(w * 0.5f, h * 0.95f, w * 0.8f, h * 0.8f)
+            lineTo(w * 0.7f, h * 0.4f)
+            quadraticTo(w * 0.5f, h * 0.3f, w * 0.3f, h * 0.4f)
             close()
         }
 
         drawPath(
-            path = path,
+            path = bodyPath,
             brush = Brush.verticalGradient(
-                colors = listOf(dropColor.copy(alpha = 0.9f), dropColor)
+                colors = listOf(mainColor.copy(alpha = 0.9f), mainColor)
             )
         )
 
-        // Borda branca do logo
-        drawPath(
-            path = path,
-            color = Color.White,
-            style = Stroke(width = w * 0.04f)
-        )
-
-        // Brilho na cabeça
-        drawCircle(
-            color = Color.White.copy(alpha = 0.4f),
-            radius = w * 0.08f,
-            center = Offset(w * 0.35f, h * 0.45f)
-        )
-
-        // Expressão (Fiel ao logo)
-        val eyeY = h * 0.65f
-        if (mood == MascotMood.SUCCESS) {
-            // Piscadinha
-            drawArc(
-                color = Color.White,
-                startAngle = 180f, sweepAngle = 180f, useCenter = false,
-                topLeft = Offset(w * 0.25f, eyeY - 5f), size = Size(w * 0.15f, h * 0.08f),
-                style = Stroke(6f, cap = StrokeCap.Round)
-            )
-            drawCircle(color = Color.White, radius = 6f, center = Offset(w * 0.65f, eyeY))
-        } else {
-            drawCircle(color = Color.White, radius = 8f, center = Offset(w * 0.38f, eyeY))
-            drawCircle(color = Color.White, radius = 8f, center = Offset(w * 0.62f, eyeY))
+        // Folhas no Topo (O símbolo do crescimento)
+        val leafPath = Path().apply {
+            moveTo(w * 0.5f, h * 0.35f)
+            quadraticTo(w * 0.3f, h * 0.15f, w * 0.45f, h * 0.05f)
+            quadraticTo(w * 0.55f, h * 0.15f, w * 0.5f, h * 0.35f)
+            
+            moveTo(w * 0.5f, h * 0.35f)
+            quadraticTo(w * 0.7f, h * 0.15f, w * 0.55f, h * 0.05f)
+            quadraticTo(w * 0.45f, h * 0.15f, w * 0.5f, h * 0.35f)
         }
 
-        // Sorriso Amigável
+        drawPath(
+            path = leafPath,
+            color = BrandYellow
+        )
+
+        // Olhos Expressivos
+        val eyeY = h * 0.6f
+        when (mood) {
+            MascotMood.SUCCESS -> {
+                // Piscada de vitória
+                drawArc(
+                    color = Color.White,
+                    startAngle = 180f, sweepAngle = 180f, useCenter = false,
+                    topLeft = Offset(w * 0.35f, eyeY - 5f), size = Size(w * 0.1f, h * 0.05f),
+                    style = Stroke(4f, cap = StrokeCap.Round)
+                )
+                drawCircle(color = Color.White, radius = 6f, center = Offset(w * 0.6f, eyeY))
+            }
+            MascotMood.EMPTY -> {
+                // Olhos pequenos (espera)
+                drawCircle(color = Color.White, radius = 4f, center = Offset(w * 0.4f, eyeY))
+                drawCircle(color = Color.White, radius = 4f, center = Offset(w * 0.6f, eyeY))
+            }
+            else -> {
+                // Olhos normais
+                drawCircle(color = Color.White, radius = 7f, center = Offset(w * 0.4f, eyeY))
+                drawCircle(color = Color.White, radius = 7f, center = Offset(w * 0.6f, eyeY))
+            }
+        }
+
+        // Sorriso
         drawArc(
             color = Color.White,
             startAngle = 0f, sweepAngle = 180f, useCenter = false,
-            topLeft = Offset(w * 0.42f, h * 0.72f), size = Size(w * 0.16f, h * 0.1f),
-            style = Stroke(5f, cap = StrokeCap.Round)
+            topLeft = Offset(w * 0.45f, h * 0.7f), size = Size(w * 0.1f, h * 0.05f),
+            style = Stroke(3f, cap = StrokeCap.Round)
         )
-        
-        // Mãozinha (Joinha do logo)
-        if (mood == MascotMood.SUCCESS) {
-             drawCircle(color = dropColor, radius = w * 0.1f, center = Offset(w * 0.15f, h * 0.65f))
-             drawPath(
-                path = Path().apply {
-                    moveTo(w * 0.1f, h * 0.6f)
-                    lineTo(w * 0.15f, h * 0.55f)
-                    lineTo(w * 0.2f, h * 0.6f)
-                },
-                color = Color.White,
-                style = Stroke(4f, cap = StrokeCap.Round)
-             )
-        }
     }
 }
 

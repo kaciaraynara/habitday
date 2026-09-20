@@ -213,6 +213,7 @@ fun AppNavigation(
                 }
                 ProgressScreen(
                     viewModel = progressViewModel,
+                    application = application,
                     mascotStyle = mascotStyle
                 )
             }

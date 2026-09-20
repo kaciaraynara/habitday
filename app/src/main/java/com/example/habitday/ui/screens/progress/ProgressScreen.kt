@@ -16,10 +16,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.habitday.HabitApplication
 import com.example.habitday.ui.components.*
 import com.example.habitday.ui.theme.*
 import com.example.habitday.viewmodel.ApiState
 import com.example.habitday.viewmodel.ProgressViewModel
+import com.example.habitday.viewmodel.SettingsViewModel
+import com.example.habitday.viewmodel.SettingsViewModelFactory
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -27,18 +31,28 @@ import java.util.Locale
 @Composable
 fun ProgressScreen(
     viewModel: ProgressViewModel,
+    application: HabitApplication,
     mascotStyle: MascotStyle = MascotStyle.CLASSICO
 ) {
     val todosState by viewModel.todosState.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
     val totalHabits by viewModel.totalHabits.collectAsState(initial = 0)
+    
+    val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(application.repository))
+    val prefs by settingsViewModel.preferences.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.fetchExternalData()
     }
 
+    val bgColor = try { 
+        Color(android.graphics.Color.parseColor(prefs?.backgroundColor ?: "#FFFFFF")) 
+    } catch (e: Exception) { 
+        BackgroundWhite 
+    }
+
     Scaffold(
-        containerColor = BackgroundWhite
+        containerColor = bgColor
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -52,7 +66,8 @@ fun ProgressScreen(
                     subtitle = "Cada hábito concluído é um passo para o seu melhor eu.",
                     showMascot = true,
                     mood = MascotMood.IDLE,
-                    mascotStyle = mascotStyle
+                    mascotStyle = mascotStyle,
+                    profileImageUri = prefs?.profileImageUri
                 )
             }
 
@@ -80,7 +95,7 @@ fun ProgressScreen(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.TipsAndUpdates, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.TipsAndUpdates, contentDescription = null, tint = BrandBlue)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text("Dicas de Produtividade", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
@@ -119,6 +134,44 @@ fun ProgressScreen(
                 }
                 else -> {}
             }
+        }
+    }
+}
+
+@Composable
+fun UserSummarySection(total: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        SummaryMiniCard(
+            label = "Hábitos ativos",
+            value = total.toString(),
+            modifier = Modifier.weight(1f)
+        )
+        SummaryMiniCard(
+            label = "Nível",
+            value = (total / 2 + 1).toString(),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun SummaryMiniCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = value, style = MaterialTheme.typography.headlineMedium, color = BrandBlue, fontWeight = FontWeight.Black)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
         }
     }
 }
@@ -165,44 +218,6 @@ fun DayItem(date: LocalDate, isToday: Boolean) {
             fontWeight = FontWeight.Black,
             color = if (isToday) Color.White else TextPrimary
         )
-    }
-}
-
-@Composable
-fun UserSummarySection(total: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        SummaryMiniCard(
-            label = "Hábitos ativos",
-            value = total.toString(),
-            modifier = Modifier.weight(1f)
-        )
-        SummaryMiniCard(
-            label = "Nível",
-            value = (total / 2 + 1).toString(),
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-fun SummaryMiniCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = value, style = MaterialTheme.typography.headlineMedium, color = BrandBlue, fontWeight = FontWeight.Black)
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-        }
     }
 }
 
