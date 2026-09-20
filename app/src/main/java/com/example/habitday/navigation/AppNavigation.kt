@@ -35,6 +35,7 @@ import com.example.habitday.ui.screens.progress.ProgressScreen
 import com.example.habitday.ui.screens.settings.AboutScreen
 import com.example.habitday.ui.screens.settings.PrivacyScreen
 import com.example.habitday.ui.screens.settings.SettingsScreen
+import com.example.habitday.ui.screens.time.TimeManagementScreen
 import com.example.habitday.ui.theme.BackgroundWhite
 import com.example.habitday.ui.theme.BrandBlue
 import com.example.habitday.viewmodel.*
@@ -228,7 +229,8 @@ fun AppNavigation(
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
-                    }
+                    },
+                    onTimeManagement = { navController.navigate(Screen.TimeManagement.route) }
                 )
             }
             composable(Screen.About.route) {
@@ -236,6 +238,9 @@ fun AppNavigation(
             }
             composable(Screen.Privacy.route) {
                 PrivacyScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Screen.TimeManagement.route) {
+                TimeManagementScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Screen.HabitForm.route,

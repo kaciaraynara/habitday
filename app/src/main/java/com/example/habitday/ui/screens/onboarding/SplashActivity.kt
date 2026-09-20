@@ -33,6 +33,7 @@ class SplashActivity : ComponentActivity() {
                         startActivity(Intent(this@SplashActivity, MainActivity::class.java))
                         finish()
                     }
+                    // A gota genérica foi substituída pelo HabitDayLogo (Broto de crescimento)
                     HabitDayLogo(sizeMultiplier = 2f)
                 }
             }

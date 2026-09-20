@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,7 +49,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onAbout: () -> Unit,
     onPrivacy: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onTimeManagement: () -> Unit
 ) {
     val prefs by viewModel.preferences.collectAsState()
     val context = LocalContext.current
@@ -177,6 +179,15 @@ fun SettingsScreen(
                     selectedColor = prefs?.highlightColor ?: "#007AFF",
                     colors = listOf("#007AFF", "#102A43", "#6A1B9A", "#AD1457", "#E65100", "#00838F", "#FF6D00", "#FF4081", "#AA00FF", "#00B8D4", "#00BFA5"),
                     onColorSelected = { viewModel.updateHighlightColor(it) }
+                )
+            }
+
+            item {
+                SettingsSectionHeader("Habilidade", Icons.Default.Schedule)
+                SettingsActionItem(
+                    label = "Dicas de Gestão de Tempo",
+                    icon = Icons.Default.Schedule,
+                    onClick = onTimeManagement
                 )
             }
 
