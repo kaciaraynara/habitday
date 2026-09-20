@@ -227,7 +227,7 @@ fun HabitFormScreen(
                                     isHydration = isHydration, hydrationGoal = goalInt
                                 )
                                 if (reminderTime.isNotBlank()) {
-                                    notificationHelper.scheduleNotification(newId, name, reminderTime)
+                                    notificationHelper.scheduleNotification(newId, name, reminderTime, isHydration)
                                 }
                             } else {
                                 existingHabit?.let {
@@ -243,7 +243,7 @@ fun HabitFormScreen(
                                     )
                                     viewModel.updateHabit(updated)
                                     if (reminderTime.isNotBlank()) {
-                                        notificationHelper.scheduleNotification(it.id, name, reminderTime)
+                                        notificationHelper.scheduleNotification(it.id, name, reminderTime, isHydration)
                                     } else {
                                         notificationHelper.cancelNotification(it.id)
                                     }

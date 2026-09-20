@@ -23,7 +23,7 @@ class NotificationHelper(private val context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Lembretes de Hábitos"
             val descriptionText = "Notificações para lembrar de concluir seus hábitos"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(channelId, name, importance).apply {
                 description = descriptionText
             }
@@ -31,7 +31,7 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    fun scheduleNotification(habitId: Long, habitName: String, time: String) {
+    fun scheduleNotification(habitId: Long, habitName: String, time: String, isHydration: Boolean = false) {
         val timeParts = time.split(":")
         if (timeParts.size != 2) return
 
@@ -46,6 +46,8 @@ class NotificationHelper(private val context: Context) {
 
         val intent = Intent(context, NotificationReceiver::class.java).apply {
             putExtra("HABIT_NAME", habitName)
+            putExtra("HABIT_ID", habitId)
+            putExtra("IS_HYDRATION", isHydration)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -84,7 +86,7 @@ class NotificationHelper(private val context: Context) {
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(if (isHydration) "Hora de beber água" else "Hora do seu hábito")
             .setContentText(if (isHydration) "Sua meta de hidratação espera por você." else "Não se esqueça de: $habitName")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
@@ -100,6 +102,18 @@ class NotificationHelper(private val context: Context) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             builder.addAction(android.R.drawable.ic_menu_add, "Registrar 1 copo", registerPendingIntent)
+        } else if (habitId != -1L) {
+            val completeIntent = Intent(context, NotificationReceiver::class.java).apply {
+                action = "ACTION_COMPLETE_HABIT"
+                putExtra("HABIT_ID", habitId)
+            }
+            val completePendingIntent = PendingIntent.getBroadcast(
+                context,
+                habitId.toInt() + 2000,
+                completeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(android.R.drawable.ic_menu_agenda, "Concluir Agora", completePendingIntent)
         }
 
         notificationManager.notify(habitName.hashCode(), builder.build())
