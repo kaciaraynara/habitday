@@ -237,8 +237,8 @@ fun ProfileImageSection(uri: String?, userName: String, onSelectImage: () -> Uni
                 AsyncImage(
                     model = uri,
                     contentDescription = "Foto de Perfil",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    contentScale = ContentScale.Crop // GARANTE CENTRALIZAÇÃO PERFEITA NA TELA DE AJUSTES
                 )
             } else {
                 Icon(

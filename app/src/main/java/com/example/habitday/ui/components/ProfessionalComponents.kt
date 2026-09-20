@@ -57,7 +57,7 @@ fun HabitDayHeader(
                         .size(64.dp)
                         .clip(CircleShape)
                         .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop // GARANTE CENTRALIZAÇÃO E PREENCHIMENTO DO CÍRCULO
                 )
             } else {
                 HabitinhoMascot(mood = mood, size = 64.dp, style = mascotStyle)
