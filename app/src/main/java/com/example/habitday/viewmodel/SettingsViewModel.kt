@@ -50,6 +50,30 @@ class SettingsViewModel(private val repository: HabitRepository) : ViewModel() {
         }
     }
 
+    fun changePassword(currentPass: String, newPass: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val prefs = preferences.value
+            val userName = prefs?.userName ?: return@launch
+            val user = repository.getUserByName(userName)
+            
+            if (user == null || user.password != currentPass) {
+                onResult(false, "Senha atual incorreta")
+            } else {
+                repository.updateUser(user.copy(password = newPass))
+                onResult(true, "Senha alterada com sucesso")
+            }
+        }
+    }
+
+    fun logout(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            repository.updatePreferences(
+                UserPreferencesEntity(isLoggedIn = false, userName = null, isOnboardingCompleted = true)
+            )
+            onComplete()
+        }
+    }
+
     fun updateProfileImage(uri: String?) {
         viewModelScope.launch {
             val current = preferences.value ?: UserPreferencesEntity()

@@ -222,7 +222,12 @@ fun AppNavigation(
                     viewModel = sVM,
                     onBack = { navController.popBackStack() },
                     onAbout = { navController.navigate(Screen.About.route) },
-                    onPrivacy = { navController.navigate(Screen.Privacy.route) }
+                    onPrivacy = { navController.navigate(Screen.Privacy.route) },
+                    onLogout = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             composable(Screen.About.route) {

@@ -1,5 +1,6 @@
 package com.example.habitday.ui.screens.settings
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -13,9 +14,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,8 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.habitday.HabitApplication
 import com.example.habitday.ui.components.HabitDayHeader
 import com.example.habitday.ui.components.HabitinhoMascot
 import com.example.habitday.ui.components.MascotMood
@@ -33,6 +39,7 @@ import com.example.habitday.ui.components.MascotStyle
 import com.example.habitday.ui.components.ProfessionalButton
 import com.example.habitday.ui.theme.*
 import com.example.habitday.viewmodel.SettingsViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,14 +47,68 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
     onAbout: () -> Unit,
-    onPrivacy: () -> Unit
+    onPrivacy: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val prefs by viewModel.preferences.collectAsState()
+    val context = LocalContext.current
+    var showPasswordDialog by remember { mutableStateOf(false) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
     
+    // Gallery Launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let { viewModel.updateProfileImage(it.toString()) }
+    }
+
+    // Camera Launcher
+    var tempUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            viewModel.updateProfileImage(tempUri.toString())
+        }
+    }
+
+    if (showPasswordDialog) {
+        ChangePasswordDialog(
+            onDismiss = { showPasswordDialog = false },
+            onConfirm = { current, new ->
+                viewModel.changePassword(current, new) { success, msg ->
+                    if (success) showPasswordDialog = false
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
+
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Escolher foto") },
+            text = { Text("Selecione a origem da imagem de perfil.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showImageSourceDialog = false
+                    galleryLauncher.launch("image/*")
+                }) { Text("Galeria") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showImageSourceDialog = false
+                    val file = File(context.cacheDir, "profile_temp.jpg")
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.provider",
+                        file
+                    )
+                    tempUri = uri
+                    cameraLauncher.launch(uri)
+                }) { Text("Câmera") }
+            }
+        )
     }
 
     Scaffold(
@@ -73,10 +134,25 @@ fun SettingsScreen(
             contentPadding = PaddingValues(bottom = 32.dp)
         ) {
             item {
-                SettingsSectionHeader("Perfil", Icons.Default.Person)
+                SettingsSectionHeader("Usuário", Icons.Default.Person)
                 ProfileImageSection(
                     uri = prefs?.profileImageUri,
-                    onSelectImage = { galleryLauncher.launch("image/*") }
+                    userName = prefs?.userName ?: "Usuário",
+                    onSelectImage = { showImageSourceDialog = true }
+                )
+            }
+
+            item {
+                SettingsActionItem(
+                    label = "Alterar senha",
+                    icon = Icons.Default.Lock,
+                    onClick = { showPasswordDialog = true }
+                )
+                SettingsActionItem(
+                    label = "Sair da conta",
+                    icon = Icons.Default.Logout,
+                    textColor = ErrorRed,
+                    onClick = { viewModel.logout(onLogout) }
                 )
             }
 
@@ -101,15 +177,6 @@ fun SettingsScreen(
                     selectedColor = prefs?.highlightColor ?: "#007AFF",
                     colors = listOf("#007AFF", "#102A43", "#6A1B9A", "#AD1457", "#E65100", "#00838F", "#FF6D00", "#FF4081", "#AA00FF", "#00B8D4", "#00BFA5"),
                     onColorSelected = { viewModel.updateHighlightColor(it) }
-                )
-            }
-
-            item {
-                SettingsColorSelector(
-                    title = "Fundo (Tema Claro)",
-                    selectedColor = prefs?.backgroundColor ?: "#FFFFFF",
-                    colors = listOf("#FFFFFF", "#F5F7F9", "#FFFDF0", "#F0F7FF", "#F2FAF2"),
-                    onColorSelected = { viewModel.updateBackgroundColor(it) }
                 )
             }
 
@@ -142,14 +209,14 @@ fun SettingsScreen(
 }
 
 @Composable
-fun ProfileImageSection(uri: String?, onSelectImage: () -> Unit) {
+fun ProfileImageSection(uri: String?, userName: String, onSelectImage: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(100.dp)
                 .clip(CircleShape)
                 .background(SurfaceLight)
                 .clickable { onSelectImage() },
@@ -164,17 +231,69 @@ fun ProfileImageSection(uri: String?, onSelectImage: () -> Unit) {
                 )
             } else {
                 Icon(
-                    Icons.Default.AddPhotoAlternate,
+                    Icons.Default.PhotoCamera,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(40.dp),
                     tint = TextSecondary
                 )
             }
         }
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(text = userName, style = MaterialTheme.typography.headlineSmall, color = TextPrimary)
         TextButton(onClick = onSelectImage) {
-            Text(if (uri == null) "Adicionar foto" else "Trocar foto", color = BrandBlue)
+            Text("Alterar foto", color = BrandBlue)
         }
     }
+}
+
+@Composable
+fun SettingsActionItem(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, textColor: Color = TextPrimary, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = textColor.copy(alpha = 0.7f), modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = textColor)
+    }
+}
+
+@Composable
+fun ChangePasswordDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
+    var currentPass by remember { mutableStateOf("") }
+    var newPass by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Alterar senha") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = currentPass,
+                    onValueChange = { currentPass = it },
+                    label = { Text("Senha atual") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newPass,
+                    onValueChange = { newPass = it },
+                    label = { Text("Nova senha") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(currentPass, newPass) }) { Text("Confirmar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }
 
 @Composable

@@ -31,6 +31,7 @@ fun ProgressScreen(
 ) {
     val todosState by viewModel.todosState.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
+    val totalHabits by viewModel.totalHabits.collectAsState(initial = 0)
 
     LaunchedEffect(Unit) {
         viewModel.fetchExternalData()
@@ -53,6 +54,10 @@ fun ProgressScreen(
                     mood = MascotMood.IDLE,
                     mascotStyle = mascotStyle
                 )
+            }
+
+            item {
+                UserSummarySection(totalHabits)
             }
 
             item {
@@ -160,6 +165,44 @@ fun DayItem(date: LocalDate, isToday: Boolean) {
             fontWeight = FontWeight.Black,
             color = if (isToday) Color.White else TextPrimary
         )
+    }
+}
+
+@Composable
+fun UserSummarySection(total: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        SummaryMiniCard(
+            label = "Hábitos ativos",
+            value = total.toString(),
+            modifier = Modifier.weight(1f)
+        )
+        SummaryMiniCard(
+            label = "Nível",
+            value = (total / 2 + 1).toString(),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun SummaryMiniCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = value, style = MaterialTheme.typography.headlineMedium, color = BrandBlue, fontWeight = FontWeight.Black)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        }
     }
 }
 

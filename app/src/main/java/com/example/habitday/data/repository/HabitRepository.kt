@@ -24,7 +24,9 @@ class HabitRepository(
 ) {
     // Room - Users
     suspend fun getUserByEmail(email: String) = userDao.getUserByEmail(email)
+    suspend fun getUserByName(name: String) = userDao.getUserByName(name)
     suspend fun registerUser(user: UserEntity) = userDao.registerUser(user)
+    suspend fun updateUser(user: UserEntity) = userDao.updateUser(user)
 
     // Room - Habits
     fun getActiveHabits(): Flow<List<HabitEntity>> = habitDao.getActiveHabits()
